@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  @apply font-display;
+}
+
+button {
+  @apply cursor-pointer;
+}
+
+@theme {
+  --font-display: Inter, "system-ui", Avenir, Helvetica, Arial, sans-serif;
+}
