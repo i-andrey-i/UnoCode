@@ -1,5 +1,6 @@
 import logging
 import json
+from datetime import datetime
 from db import init_db, save_transaction
 from api import fetch_bank_transactions
 
@@ -22,18 +23,51 @@ def detect_organization(item):
     inn = item.get("inn")
     return INN_ORG_MAP.get(inn, "Неизвестно")
 
+def normalize_method(raw_value):
+    val = str(raw_value).strip().lower()
+    if "qr" in val:
+        return "QR"
+    elif "налич" in val:
+        return "Наличка"
+    elif "карт" in val:
+        return "Карта"
+    elif "счет" in val or "счёт" in val:
+        return "Счет"
+    else:
+        return "Счет"
+
+def validate_transaction(item):
+    try:
+        tx_id = str(item["id"])
+        amount = float(item["amount"])
+        if amount == 0:
+            return False, "Сумма = 0"
+
+        date = datetime.strptime(item["date"], "%Y-%m-%d").date()
+
+        tx = {
+            "external_id": tx_id,
+            "organization": detect_organization(item),
+            "operation": "Поступление" if amount > 0 else "Списание",
+            "method": normalize_method(item.get("payment_type", "Счет")),
+            "amount": abs(amount),
+            "date": str(date),
+            "counterparty": item.get("counterparty"),
+            "purpose": item.get("purpose")
+        }
+        return True, tx
+
+    except (KeyError, ValueError, TypeError) as e:
+        return False, f"Ошибка валидации: {e}"
+
 def parse_transactions(raw_data):
     parsed = []
     for item in raw_data.get("transactions", []):
-        tx = {
-            "organization": detect_organization(item),
-            "operation": "Поступление" if item["amount"] > 0 else "Списание",
-            "method": item.get("payment_type", "Счет"),
-            "amount": abs(item["amount"]),
-            "date": item["date"],
-            "external_id": item["id"]
-        }
-        parsed.append(tx)
+        valid, result = validate_transaction(item)
+        if valid:
+            parsed.append(result)
+        else:
+            logging.warning(f"Пропущена транзакция: {result}")
     return parsed
 
 def main():
@@ -41,13 +75,18 @@ def main():
     try:
         init_db()
         data = fetch_bank_transactions()
-        
-        # Сохраняем сырые данные в файл
+
+        # Сохраняем сырые данные в файл для отладки
         with open("raw_transactions.json", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        
+
         transactions = parse_transactions(data)
-        logging.info(f"Получено {len(transactions)} транзакций")
+
+        # ✅ Сохраняем валидационные/нормализованные данные для фронта
+        with open("validated_transactions.json", "w", encoding="utf-8") as f:
+            json.dump(transactions, f, ensure_ascii=False, indent=2)
+
+        logging.info(f"Получено {len(transactions)} валидных транзакций")
 
         for tx in transactions:
             save_transaction(tx)

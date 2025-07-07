@@ -11,6 +11,8 @@ def init_db():
             method TEXT,
             amount REAL,
             date TEXT,
+            counterparty TEXT,
+            purpose TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             external_id TEXT UNIQUE
         )
@@ -24,14 +26,16 @@ def save_transaction(tx):
     try:
         cur.execute("""
             INSERT INTO finance_transactions (
-                organization, operation, method, amount, date, external_id
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                organization, operation, method, amount, date, counterparty, purpose, external_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             tx["organization"],
             tx["operation"],
             tx["method"],
             tx["amount"],
             tx["date"],
+            tx.get("counterparty"),
+            tx.get("purpose"),
             tx["external_id"]
         ))
         conn.commit()
