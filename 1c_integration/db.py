@@ -1,7 +1,7 @@
 import sqlite3
 import logging
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List, Optional
 from .config import settings
 
 logger = logging.getLogger(__name__)
@@ -191,6 +191,63 @@ async def get_daily_product_summary(date: str):
         ]
     except Exception as e:
         logger.error(f"Ошибка при получении сводки за {date}: {str(e)}")
+        raise
+    finally:
+        conn.close()
+
+async def get_product_transactions_by_date_range(
+    start_date: str,
+    end_date: str,
+    organization: Optional[str] = None
+) -> List[Dict]:
+    """
+    Получение товарных операций за период
+    
+    Args:
+        start_date: Начальная дата в формате YYYY-MM-DD
+        end_date: Конечная дата в формате YYYY-MM-DD
+        organization: Организация для фильтрации
+    """
+    conn = sqlite3.connect(settings.DATABASE_PATH)
+    cur = conn.cursor()
+    
+    try:
+        query = """
+            SELECT 
+                organization,
+                operation,
+                method,
+                item,
+                date,
+                external_id
+            FROM product_transactions
+            WHERE date BETWEEN ? AND ?
+        """
+        params = [start_date, end_date]
+        
+        if organization:
+            query += " AND organization = ?"
+            params.append(organization)
+            
+        query += " ORDER BY date DESC, created_at DESC"
+        
+        cur.execute(query, params)
+        rows = cur.fetchall()
+        
+        return [
+            {
+                "organization": row[0],
+                "operation": row[1],
+                "method": row[2],
+                "item": row[3],
+                "date": row[4],
+                "external_id": row[5]
+            }
+            for row in rows
+        ]
+        
+    except Exception as e:
+        logging.error(f"Ошибка при получении транзакций за период: {str(e)}")
         raise
     finally:
         conn.close() 
