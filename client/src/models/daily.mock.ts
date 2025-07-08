@@ -127,13 +127,13 @@ const generateMockData = (numDays: number): FullReport => {
 
     dailyReports.push({
       date: formatDate(currentDate),
-      isCollapsed: false, // i !== 0,
+      isCollapsed: false, // либо i !== 0,
       entities: dayEntities,
     });
   }
   return {
-    startOfMonthBalance: 100000, // Задаем начальный баланс
-    dailyReports: dailyReports, // Вкладываем сгенерированный массив дней
+    startOfMonthBalance: 100000,
+    dailyReports: dailyReports,
   };
 };
 

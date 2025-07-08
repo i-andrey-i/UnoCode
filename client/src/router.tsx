@@ -1,8 +1,9 @@
 import { createBrowserRouter } from "react-router";
 import { DailyPage } from "./pages/Daily";
-import { DataPage } from "./pages/Data";
 import { Homepage } from "./pages/Homepage";
 import { AppLayout } from "./AppLayout";
+import { BankDataPage } from "./pages/BankDataPage";
+import { OneCDataPage } from "./pages/OneCDataPage";
 
 export const router = createBrowserRouter([
   {
@@ -18,8 +19,12 @@ export const router = createBrowserRouter([
         Component: DailyPage,
       },
       {
-        path: "/data",
-        Component: DataPage,
+        path: "/bank-statements",
+        Component: BankDataPage,
+      },
+      {
+        path: "/1c-reports",
+        Component: OneCDataPage,
       },
     ],
   },

@@ -22,13 +22,11 @@ export function DailyPage() {
       <div className="mx-auto max-w-7xl">
         <h1 className="mb-8 text-4xl font-extrabold text-gray-800">Ежедневный отчёт</h1>
 
-        {/* ДОБАВЛЯЕМ КОМПОНЕНТ С СУММАМИ */}
         <SummaryHeader
           startBalance={reportData.startOfMonthBalance}
           currentBalance={currentBalance}
         />
 
-        {/* Рендерим данные по дням, обращаясь к вложенному массиву */}
         {reportData.dailyReports.map((day) => (
           <DayBlock key={day.date} dayData={day} />
         ))}
