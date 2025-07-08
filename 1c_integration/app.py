@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Query, HTTPException
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict
-from .db import init_products_db, get_product_transactions, get_daily_product_summary
-from .api import OneCAPI
+from db import init_products_db, get_product_transactions, get_daily_product_summary
+from api import OneCAPI
 from contextlib import asynccontextmanager
 
 @asynccontextmanager

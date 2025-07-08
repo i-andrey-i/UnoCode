@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
 from typing import List, Dict, Optional
-from .odata_client import ODataClient
-from .db import save_product_transaction
-from .config import settings
+from odata_client import ODataClient
+from db import save_product_transaction
+from config import settings
 
 logger = logging.getLogger(__name__)
 
