@@ -1,0 +1,30 @@
+#Секреты и ключи
+.env
+certs/
+*.cer
+*.key
+
+#Логи
+*.log
+app.log
+
+#Сырые данные
+raw_transactions.json
+validated_transactions.json
+
+#Локальная база данных
+*.sqlite
+bank_data.db
+
+#Python кэш
+__pycache__/
+*.pyc
+*.pyo
+
+#IDE/редактор
+.vscode/
+.idea/
+
+#Системные файлы
+.DS_Store
+Thumbs.db
