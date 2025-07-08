@@ -4,6 +4,9 @@ from typing import Optional, List, Dict
 from db import init_products_db, get_product_transactions, get_daily_product_summary
 from api import OneCAPI
 from contextlib import asynccontextmanager
+import sqlite3
+from fastapi.responses import JSONResponse
+from odata_client import ODataClient
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -66,6 +69,10 @@ async def sync_data(
 ) -> Dict:
     """
     Запуск синхронизации данных с 1C
+    
+    Args:
+        start_date: Начальная дата синхронизации (YYYY-MM-DD)
+        end_date: Конечная дата синхронизации (YYYY-MM-DD)
     """
     try:
         api = OneCAPI()
@@ -89,7 +96,34 @@ async def health_check() -> Dict:
     """
     Проверка работоспособности сервиса
     """
-    return {
+    status = {
         "status": "healthy",
-        "timestamp": datetime.now().isoformat()
-    } 
+        "timestamp": datetime.now().isoformat(),
+        "checks": {}
+    }
+    
+    # Проверка БД
+    try:
+        conn = sqlite3.connect("products.db")
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        conn.close()
+        status["checks"]["database"] = "healthy"
+    except Exception as e:
+        status["status"] = "unhealthy"
+        status["checks"]["database"] = {"status": "unhealthy", "error": str(e)}
+        return JSONResponse(status_code=500, content=status)
+
+    # Проверка 1C
+    try:
+        client = ODataClient()
+        # Пробуем получить один документ для проверки подключения
+        await client.get_documents("ПриходнаяНакладная")
+        status["checks"]["1c_connection"] = "healthy"
+    except Exception as e:
+        status["status"] = "unhealthy"
+        status["checks"]["1c_connection"] = {"status": "unhealthy", "error": str(e)}
+        return JSONResponse(status_code=500, content=status)
+
+    return status 

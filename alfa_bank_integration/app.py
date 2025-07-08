@@ -1,11 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from db import init_db
 import os
 import json
 import sqlite3
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, List
 from fastapi.responses import JSONResponse
+from datetime import datetime
+from api import fetch_bank_transactions
 
 @asynccontextmanager
 async def lifespan(app):
@@ -14,8 +16,84 @@ async def lifespan(app):
 
 app = FastAPI(title="Alfa Bank API", lifespan=lifespan)
 
+@app.get("/health")
+async def health_check():
+    try:
+        conn = sqlite3.connect("bank_data.db")
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        conn.close()
+        return {"status": "healthy"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "unhealthy", "error": str(e)}
+        )
+
+@app.post("/sync")
+async def sync_data():
+    """
+    Синхронизация данных с банком
+    """
+    try:
+        # Получаем новые транзакции из банка
+        transactions = fetch_bank_transactions()
+        
+        # Сохраняем в БД только уникальные транзакции
+        conn = sqlite3.connect("bank_data.db")
+        cur = conn.cursor()
+        
+        new_count = 0
+        error_count = 0
+        
+        for tx in transactions:
+            # Проверяем существование транзакции
+            cur.execute(
+                "SELECT 1 FROM finance_transactions WHERE external_id = ?",
+                (tx["external_id"],)
+            )
+            
+            if not cur.fetchone():  # Если транзакция новая
+                try:
+                    cur.execute("""
+                        INSERT INTO finance_transactions 
+                        (organization, operation, method, amount, date, external_id, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        tx["organization"],
+                        tx["operation"],
+                        tx["method"],
+                        tx["amount"],
+                        tx["date"],
+                        tx["external_id"],
+                        datetime.now().isoformat()
+                    ))
+                    new_count += 1
+                except Exception as e:
+                    error_count += 1
+                    continue
+        
+        conn.commit()
+        conn.close()
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.now().isoformat(),
+            "stats": {
+                "processed": len(transactions),
+                "new": new_count,
+                "errors": error_count
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/transactions")
-def get_transactions(organization: str = None, limit: int = 100):
+def get_transactions(organization: Optional[str] = None, limit: int = 100):
+    """
+    Получение банковских транзакций
+    """
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
 

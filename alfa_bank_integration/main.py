@@ -1,15 +1,17 @@
 import logging
 import json
 from datetime import datetime
+from fastapi import FastAPI, HTTPException
 from db import init_db, save_transaction
 from api import fetch_bank_transactions
 
 # Настройка логирования
 logging.basicConfig(
-    filename='app.log',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
+app = FastAPI()
 
 # Сопоставление ИНН с организациями
 INN_ORG_MAP = {
@@ -18,6 +20,30 @@ INN_ORG_MAP = {
     "1122334455": "ИП2",
     "5566778899": "ИП3"
 }
+
+@app.on_event("startup")
+async def startup_event():
+    init_db()
+    logging.info("База данных инициализирована")
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+@app.post("/sync")
+async def sync_transactions():
+    try:
+        data = fetch_bank_transactions()
+        transactions = parse_transactions(data)
+        
+        for tx in transactions:
+            save_transaction(tx)
+            logging.info(f"Сохранена транзакция: {tx['external_id']}")
+        
+        return {"status": "success", "count": len(transactions)}
+    except Exception as e:
+        logging.error(f"Ошибка синхронизации: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 def detect_organization(item):
     inn = item.get("inn")
@@ -69,33 +95,3 @@ def parse_transactions(raw_data):
         else:
             logging.warning(f"Пропущена транзакция: {result}")
     return parsed
-
-def main():
-    logging.info("Запуск скрипта интеграции Альфа-Банка")
-    try:
-        init_db()
-        data = fetch_bank_transactions()
-
-        # Сохраняем сырые данные в файл для отладки
-        with open("raw_transactions.json", "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
-        transactions = parse_transactions(data)
-
-        # ✅ Сохраняем валидационные/нормализованные данные для фронта
-        with open("validated_transactions.json", "w", encoding="utf-8") as f:
-            json.dump(transactions, f, ensure_ascii=False, indent=2)
-
-        logging.info(f"Получено {len(transactions)} валидных транзакций")
-
-        for tx in transactions:
-            save_transaction(tx)
-            logging.info(f"Сохранена транзакция: {tx['external_id']}")
-
-        logging.info("Работа завершена успешно")
-
-    except Exception as e:
-        logging.error(f"Ошибка выполнения скрипта: {e}")
-
-if __name__ == "__main__":
-    main()

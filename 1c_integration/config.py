@@ -3,11 +3,11 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # База данных
-    DATABASE_PATH: str | None = None
+    DATABASE_PATH: str = "/app/data/products.db"
     
     # OData настройки
     ODATA_BASE_URL: str | None = None
-    ODATA_VERSION: str = "4.0"
+    ODATA_VERSION: str | None = None
     ODATA_PASSWORD: str | None = None  # Basic auth key
     
     # Справочники 1С
@@ -22,6 +22,5 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
-        env_prefix = "ODATA_"
 
 settings = Settings() 

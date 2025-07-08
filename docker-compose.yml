@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  1c_integration:
+    build: ./1c_integration
+    container_name: 1c_integration
+    ports:
+      - "8002:8000"
+    environment:
+      - ODATA_BASE_URL=${ODATA_BASE_URL}
+      - ODATA_PASSWORD=${ODATA_PASSWORD}
+      - ODATA_VERSION=${ODATA_VERSION:-4.0}
+      - DATABASE_PATH=${DATABASE_PATH:-/app/products.db}
+    volumes:
+      - ./1c_integration/data:/app/data
+    # healthcheck:
+    #   test: curl -f http://1c_integration:8000/health || exit 1
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 20s
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  alfa_bank:
+    build: ./alfa_bank_integration
+    container_name: alfa_bank
+    ports:
+      - "8001:8000"
+    environment:
+      - ALFA_CLIENT_ID=${ALFA_CLIENT_ID}
+      - ALFA_CLIENT_SECRET=${ALFA_CLIENT_SECRET}
+      - ALFA_CERT_PATH=${ALFA_CERT_PATH:-/app/certs/Company.cer}
+      - ALFA_KEY_PATH=${ALFA_KEY_PATH:-/app/certs/Company.key}
+      - ALFA_TOKEN_URL=${ALFA_TOKEN_URL:-https://baas.alfabank.ru/oidc/token}
+      - ALFA_API_BASE_URL=${ALFA_API_BASE_URL:-https://baas.alfabank.ru/api}
+      - ALFA_SCOPE=${ALFA_SCOPE}
+    volumes:
+      - ./alfa_bank_integration/data:/app/data
+      - ./alfa_bank_integration/certs:/app/certs
+    # healthcheck:
+    #   test: curl -f http://alfa_bank:8000/health || exit 1
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 20s
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  api_gateway:
+    build: ./api_gateway
+    container_name: api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - ALFA_BANK_SERVICE_URL=http://alfa_bank:8000
+      - ONEC_SERVICE_URL=http://1c_integration:8000
+    depends_on:
+      - alfa_bank
+      - 1c_integration
+    # healthcheck:
+    #   test: curl -f http://api_gateway:8000/health || exit 1
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 20s
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  client:
+    build: ./client
+    container_name: client
+    ports:
+      - "80:80"
+    depends_on:
+      - api_gateway
+    restart: unless-stopped
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

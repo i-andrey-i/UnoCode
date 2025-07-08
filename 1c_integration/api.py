@@ -52,7 +52,12 @@ class OneCAPI:
         return operations
 
     async def fetch_product_operations(self, date_from: Optional[datetime] = None) -> List[Dict]:
-        """Получение товарных операций"""
+        """
+        Получение товарных операций
+        
+        Args:
+            date_from: Дата, с которой начинать синхронизацию
+        """
         all_operations = []
         
         try:
