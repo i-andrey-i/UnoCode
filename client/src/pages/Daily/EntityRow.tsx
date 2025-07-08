@@ -54,7 +54,6 @@ export const EntityRow: React.FC<EntityRowProps> = ({ entityData }) => {
         <div className="pr-4 text-right">{entityData.goodsOut.total.toLocaleString("ru-RU")}</div>
       </div>
 
-      {/* ДЕТАЛИЗАЦИЯ (если не свернуто) */}
       {!isCollapsed && (
         <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] bg-gray-50/70">
           <div /> {/* Пустая ячейка под именем */}

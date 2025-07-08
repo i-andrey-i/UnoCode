@@ -1,33 +1,42 @@
-import { NavLink, Outlet, useLocation } from "react-router";
-import { cn } from "./utils/cn";
+import { NavLink, Outlet } from "react-router";
 
 export function AppLayout() {
-  const { pathname } = useLocation();
+  const activeLinkStyle = {
+    backgroundColor: "oklch(58.5% 0.233 277.117)",
+    color: "white",
+  };
 
   return (
-    <div>
-      <nav className="flex">
-        <NavLink
-          to="/daily"
-          className={cn("font-medium px-2 py-1", {
-            "bg-blue-100 text-blue-600": pathname === "/daily",
-            "hover:bg-gray-200 text-gray-600": pathname !== "/daily",
-          })}
-        >
-          Ежедневная отчётность
-        </NavLink>
-        <NavLink
-          to="/data"
-          className={cn("font-medium px-2 py-1", {
-            "bg-blue-100 text-blue-600": pathname === "/data",
-            "hover:bg-gray-200 text-gray-600": pathname !== "/data",
-          })}
-        >
-          Входящие данные
-        </NavLink>
-      </nav>
-      <main>
-        <Outlet />
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm">
+        <nav className="mx-auto flex max-w-7xl items-center space-x-4 px-4 py-4 sm:px-6 lg:px-8">
+          <NavLink
+            to="/daily"
+            style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+            className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            Финансовый отчет
+          </NavLink>
+          <NavLink
+            to="/bank-statements"
+            style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+            className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            Банковские выписки
+          </NavLink>
+          <NavLink
+            to="/1c-reports"
+            style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+            className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            Отчеты 1С
+          </NavLink>
+        </nav>
+      </header>
+      <main className="p-4 sm:p-8">
+        <div className="mx-auto max-w-7xl">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
