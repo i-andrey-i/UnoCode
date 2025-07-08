@@ -7,11 +7,11 @@ from config import settings
 class ODataClient:
     def __init__(self):
         self.base_url = settings.ODATA_BASE_URL
-        self.auth = (settings.ODATA_USER, settings.ODATA_PASSWORD)
         self.headers = {
             "Accept": "application/json",
             "DataServiceVersion": settings.ODATA_VERSION,
-            "MaxDataServiceVersion": settings.ODATA_VERSION
+            "MaxDataServiceVersion": settings.ODATA_VERSION,
+            "Authorization": f"Basic {settings.ODATA_PASSWORD}"
         }
         self.logger = logging.getLogger(__name__)
 
@@ -28,7 +28,6 @@ class ODataClient:
                 url,
                 params=params,
                 headers=self.headers,
-                auth=self.auth,
                 verify=True  # SSL verification
             )
             response.raise_for_status()
