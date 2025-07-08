@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from db import init_db
+import os
+import json
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Optional
+from fastapi.responses import JSONResponse
 
 @asynccontextmanager
 async def lifespan(app):
@@ -98,3 +101,72 @@ def get_transaction_summary(
         for row in rows
     ]
     return result
+
+# === GET /api/daily_report ===
+@app.get("/api/daily_report")
+def get_daily_report():
+    conn = sqlite3.connect("bank_data.db")
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT date, organization,
+            SUM(CASE WHEN operation = 'Поступление' THEN amount ELSE 0 END) as total_income,
+            SUM(CASE WHEN operation = 'Списание' THEN amount ELSE 0 END) as total_expense
+        FROM finance_transactions
+        GROUP BY date, organization
+        ORDER BY date DESC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    result = [
+        {
+            "date": row[0],
+            "organization": row[1],
+            "total_income": round(row[2], 2),
+            "total_expense": round(row[3], 2)
+        }
+        for row in rows
+    ]
+    return result
+
+
+# === GET /api/monthly_balance ===
+@app.get("/api/monthly_balance")
+def get_monthly_balance():
+    conn = sqlite3.connect("bank_data.db")
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT organization,
+            SUM(CASE WHEN operation = 'Поступление' THEN amount ELSE 0 END) -
+            SUM(CASE WHEN operation = 'Списание' THEN amount ELSE 0 END) as current_balance
+        FROM finance_transactions
+        GROUP BY organization
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    result = [
+        {
+            "organization": row[0],
+            "current_balance": round(row[1], 2)
+        }
+        for row in rows
+    ]
+    return result
+
+
+# === GET /api/incoming_raw ===
+@app.get("/api/incoming_raw")
+def get_incoming_raw():
+    raw_path = "raw_transactions.json"
+    if not os.path.exists(raw_path):
+        return JSONResponse(status_code=404, content={"error": "Файл raw_transactions.json не найден"})
+
+    with open(raw_path, "r", encoding="utf-8") as f:
+        try:
+            raw_data = json.load(f)
+        except json.JSONDecodeError:
+            return JSONResponse(status_code=500, content={"error": "Ошибка чтения JSON из файла"})
+    return raw_data
