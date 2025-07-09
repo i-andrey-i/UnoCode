@@ -1,7 +1,7 @@
 import logging
 import json
 from datetime import datetime
-from db import init_db, save_transaction
+from db import init_db, save_transaction, update_monthly_balance
 from api import fetch_bank_transactions
 
 # Настройка логирования
@@ -82,7 +82,7 @@ def main():
 
         transactions = parse_transactions(data)
 
-        # ✅ Сохраняем валидационные/нормализованные данные для фронта
+        # Сохраняем валидационные/нормализованные данные для фронта
         with open("validated_transactions.json", "w", encoding="utf-8") as f:
             json.dump(transactions, f, ensure_ascii=False, indent=2)
 
@@ -93,6 +93,9 @@ def main():
             logging.info(f"Сохранена транзакция: {tx['external_id']}")
 
         logging.info("Работа завершена успешно")
+
+        update_monthly_balance()
+        logging.info("Обновлены записи в monthly_balance")
 
     except Exception as e:
         logging.error(f"Ошибка выполнения скрипта: {e}")

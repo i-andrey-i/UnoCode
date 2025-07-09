@@ -1,10 +1,12 @@
-from fastapi import FastAPI
-from db import init_db
 import os
 import json
 import sqlite3
+from fastapi import FastAPI
+from db import init_db, save_transaction, update_monthly_balance
+from api import fetch_bank_transactions
 from contextlib import asynccontextmanager
 from typing import Optional
+from main import parse_transactions, validate_transaction, detect_organization, normalize_method
 from fastapi.responses import JSONResponse
 
 @asynccontextmanager
@@ -133,28 +135,35 @@ def get_daily_report():
 
 # === GET /api/monthly_balance ===
 @app.get("/api/monthly_balance")
-def get_monthly_balance():
+def get_monthly_balance(organization: Optional[str] = None):
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT organization,
-            SUM(CASE WHEN operation = 'Поступление' THEN amount ELSE 0 END) -
-            SUM(CASE WHEN operation = 'Списание' THEN amount ELSE 0 END) as current_balance
-        FROM finance_transactions
-        GROUP BY organization
-    """)
+    if organization:
+        cur.execute("""
+            SELECT organization, date, balance
+            FROM monthly_balance
+            WHERE organization = ?
+            ORDER BY date
+        """, (organization,))
+    else:
+        cur.execute("""
+            SELECT organization, date, balance
+            FROM monthly_balance
+            ORDER BY organization, date
+        """)
+
     rows = cur.fetchall()
     conn.close()
 
-    result = [
+    return [
         {
             "organization": row[0],
-            "current_balance": round(row[1], 2)
+            "date": row[1],
+            "balance": round(row[2], 2)
         }
         for row in rows
     ]
-    return result
 
 
 # === GET /api/incoming_raw ===
@@ -170,3 +179,36 @@ def get_incoming_raw():
         except json.JSONDecodeError:
             return JSONResponse(status_code=500, content={"error": "Ошибка чтения JSON из файла"})
     return raw_data
+
+@app.post("/api/sync")
+def sync_data():
+    try:
+        data = fetch_bank_transactions()
+
+        # Сохраняем "сырые" данные
+        with open("raw_transactions.json", "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        transactions = parse_transactions(data)
+
+        # Сохраняем нормализованные данные
+        with open("validated_transactions.json", "w", encoding="utf-8") as f:
+            json.dump(transactions, f, ensure_ascii=False, indent=2)
+
+        saved_count = 0
+        for tx in transactions:
+            save_transaction(tx)
+            saved_count += 1
+
+        update_monthly_balance()
+
+        return {
+            "status": "success",
+            "raw_count": len(data.get("transactions", [])),
+            "validated_count": len(transactions),
+            "saved_count": saved_count,
+            "organizations": list({tx["organization"] for tx in transactions})
+        }
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
