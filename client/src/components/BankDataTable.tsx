@@ -46,15 +46,15 @@ export function BankDataTable({ data }: { data: BankTransaction[] }) {
     <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
-          <col className="w-28" /> {/* Дата */}
-          <col className="w-32" /> {/* Дебет */}
-          <col className="w-32" /> {/* Кредит */}
-          <col className="w-32" /> {/* ИНН */}
-          <col className="w-52" /> {/* Контрагент */}
-          <col className="w-48" /> {/* Счет */}
-          <col className="w-72" /> {/* Назначение (самая широкая колонка) */}
-          <col className="w-40" /> {/* Статья */}
-          <col className="w-40" /> {/* Тип документа */}
+          <col className="w-28" />
+          <col className="w-32" />
+          <col className="w-32" />
+          <col className="w-32" />
+          <col className="w-52" />
+          <col className="w-48" />
+          <col className="w-72" />
+          <col className="w-40" />
+          <col className="w-40" />
         </colgroup>
 
         <thead className="bg-gray-50 text-xs text-gray-700 uppercase">
