@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import type { DayReport } from "../../models/daily";
 import { EntityRow } from "./EntityRow";
+import { ChevronRightIcon } from "lucide-react";
 
 interface DayBlockProps {
   dayData: DayReport;
@@ -20,7 +21,7 @@ export const DayBlock: React.FC<DayBlockProps> = ({ dayData }) => {
         <span
           className={`mr-3 transition-transform duration-200 ${!isCollapsed ? "rotate-90" : ""}`}
         >
-          ▶
+          <ChevronRightIcon />
         </span>
         <h2 className="text-xl font-bold text-gray-800">{dayData.date}</h2>
       </div>
