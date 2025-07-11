@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
@@ -8,14 +8,14 @@ class ProductTransaction(BaseModel):
     operation: str = Field(..., description="Тип операции (Поступление/Расход)")
     method: str = Field(..., description="Способ операции (Закупка/Перемещение/Реализация/Списание)")
     item: str = Field(..., description="Наименование товара")
-    date: datetime = Field(..., description="Дата операции")
+    date: date = Field(..., description="Дата операции")
     external_id: str = Field(..., description="Внешний идентификатор из 1С")
-    created_at: datetime = Field(default_factory=datetime.now, description="Дата создания записи")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Дата создания записи")
 
 class ProductResponse(BaseModel):
     """Модель ответа со списком товарных операций"""
     status: str = Field("success", description="Статус ответа")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Время формирования ответа")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Время формирования ответа")
     data: List[ProductTransaction] = Field(default_factory=list, description="Список товарных операций")
 
 class ProductSummaryItem(BaseModel):
@@ -28,7 +28,7 @@ class ProductSummaryItem(BaseModel):
 class ProductSummaryResponse(BaseModel):
     """Модель ответа со сводкой по товарным операциям"""
     status: str = Field("success", description="Статус ответа")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Время формирования ответа")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Время формирования ответа")
     data: List[ProductSummaryItem] = Field(default_factory=list, description="Сводка по операциям")
 
 class SyncResponse(BaseModel):
@@ -42,4 +42,4 @@ class ErrorResponse(BaseModel):
     """Модель ответа с ошибкой"""
     status: str = Field("error", description="Статус ответа")
     message: str = Field(..., description="Описание ошибки")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Время возникновения ошибки") 
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Время возникновения ошибки") 

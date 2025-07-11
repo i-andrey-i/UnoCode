@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field, condecimal
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 class ProductTransaction(BaseModel):
@@ -8,9 +8,9 @@ class ProductTransaction(BaseModel):
     operation: str = Field(..., description="Тип операции: Поступление/Расход")
     method: str = Field(..., description="Метод: Закупка/Перемещение/Реализация/Списание")
     item: str = Field(..., description="Наименование товара")
-    date: datetime = Field(..., description="Дата операции")
+    date: date = Field(..., description="Дата операции")
     external_id: str = Field(..., description="Уникальный идентификатор из 1С")
-    created_at: datetime = Field(default_factory=datetime.now, description="Дата создания записи")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Дата создания записи")
 
 class ProductSummary(BaseModel):
     organization: str = Field(..., description="Организация (ИП1/ИП2/ИП3/ООО)")
@@ -20,23 +20,23 @@ class ProductSummary(BaseModel):
 
 class ProductResponse(BaseModel):
     status: str = Field(..., description="Статус ответа: success/error")
-    date: Optional[datetime] = Field(None, description="Дата операции")
+    date: Optional[date] = Field(None, description="Дата операции")
     data: List[ProductTransaction] = Field(..., description="Список товарных операций")
 
 class ProductSummaryResponse(BaseModel):
     status: str = Field(..., description="Статус ответа: success/error")
-    date: datetime = Field(..., description="Дата операции")
+    date: date = Field(..., description="Дата операции")
     data: List[ProductSummary] = Field(..., description="Список сводок по операциям")
 
 class SyncResponse(BaseModel):
     status: str = Field(..., description="Статус ответа: success/error")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Временная метка синхронизации")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Временная метка синхронизации")
     sync_results: Dict[str, Dict] = Field(..., description="Результаты синхронизации по сервисам")
 
 class ErrorResponse(BaseModel):
     status: str = Field("error", description="Статус ответа: error")
     message: str = Field(..., description="Описание ошибки")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Временная метка ошибки")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Временная метка ошибки")
 
 # Модели для банковских операций
 class BankTransaction(BaseModel):
@@ -44,13 +44,13 @@ class BankTransaction(BaseModel):
     operation: str = Field(..., description="Тип операции: Поступление/Списание")
     method: str = Field(..., description="Метод: Счет/Карта/Наличка/QR")
     amount: condecimal(decimal_places=2) = Field(..., description="Сумма операции")
-    date: datetime = Field(..., description="Дата операции")
+    date: date = Field(..., description="Дата операции")
     external_id: str = Field(..., description="Уникальный идентификатор из банка")
-    created_at: datetime = Field(default_factory=datetime.now, description="Дата создания записи")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Дата создания записи")
 
 class BankResponse(BaseModel):
     status: str = Field(..., description="Статус ответа: success/error")
-    date: Optional[datetime] = Field(None, description="Дата операции")
+    date: Optional[date] = Field(None, description="Дата операции")
     data: List[BankTransaction] = Field(..., description="Список банковских операций")
 
 class DailyReportFinance(BaseModel):
@@ -69,6 +69,6 @@ class DailyReportOrg(BaseModel):
 
 class DailyReport(BaseModel):
     status: str = Field(..., description="Статус ответа: success/error")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Временная метка отчета")
-    date: datetime = Field(..., description="Дата отчета")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Временная метка отчета")
+    date: date = Field(..., description="Дата отчета")
     data: Dict[str, DailyReportOrg] = Field(..., description="Данные по организациям") 

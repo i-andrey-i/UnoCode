@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional
 from decimal import Decimal
 from pydantic import BaseModel, Field, condecimal
@@ -9,14 +9,14 @@ class BankTransaction(BaseModel):
     operation: str = Field(..., description="Тип операции (Поступление/Списание)")
     method: str = Field(..., description="Способ операции (Счет/Карта/Наличка/QR)")
     amount: condecimal(decimal_places=2) = Field(..., description="Сумма операции")
-    date: datetime = Field(..., description="Дата операции")
+    date: date = Field(..., description="Дата операции")
     external_id: str = Field(..., description="Внешний идентификатор из Альфа-Банка")
-    created_at: datetime = Field(default_factory=datetime.now, description="Дата создания записи")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Дата создания записи")
 
 class BankResponse(BaseModel):
     """Модель ответа со списком банковских операций"""
     status: str = Field("success", description="Статус ответа")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Время формирования ответа")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Время формирования ответа")
     data: List[BankTransaction] = Field(default_factory=list, description="Список банковских операций")
 
 class BankSummaryItem(BaseModel):
@@ -29,19 +29,19 @@ class BankSummaryItem(BaseModel):
 class BankSummaryResponse(BaseModel):
     """Модель ответа со сводкой по банковским операциям"""
     status: str = Field("success", description="Статус ответа")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Время формирования ответа")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Время формирования ответа")
     data: List[BankSummaryItem] = Field(default_factory=list, description="Сводка по операциям")
 
 class MonthlyBalance(BaseModel):
     """Модель месячного баланса"""
     organization: str = Field(..., description="Организация")
-    date: datetime = Field(..., description="Дата")
+    date: date = Field(..., description="Дата")
     balance: condecimal(decimal_places=2) = Field(..., description="Текущий баланс")
 
 class MonthlyBalanceResponse(BaseModel):
     """Модель ответа с месячными балансами"""
     status: str = Field("success", description="Статус ответа")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Время формирования ответа")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Время формирования ответа")
     data: List[MonthlyBalance] = Field(default_factory=list, description="Список балансов")
 
 class SyncResponse(BaseModel):
@@ -55,4 +55,4 @@ class ErrorResponse(BaseModel):
     """Модель ответа с ошибкой"""
     status: str = Field("error", description="Статус ответа")
     message: str = Field(..., description="Описание ошибки")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Время возникновения ошибки") 
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Время возникновения ошибки") 

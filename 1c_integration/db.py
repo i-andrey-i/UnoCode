@@ -1,6 +1,6 @@
 import sqlite3
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, List, Optional
 from config import settings
 
@@ -68,11 +68,15 @@ def validate_transaction(tx: Dict) -> None:
     if tx['method'] not in settings.METHODS:
         raise ValueError(f"Недопустимое значение method: {tx['method']}")
     
-    # Проверка формата даты
+    # Проверка и преобразование даты
     try:
         if isinstance(tx['date'], str):
-            datetime.strptime(tx['date'], '%Y-%m-%d')
-    except ValueError:
+            tx['date'] = datetime.strptime(tx['date'], '%Y-%m-%d').date()
+        elif isinstance(tx['date'], datetime):
+            tx['date'] = tx['date'].date()
+        elif not isinstance(tx['date'], date):
+            raise ValueError(f"Неверный тип даты: {type(tx['date'])}")
+    except ValueError as e:
         raise ValueError(f"Неверный формат даты: {tx['date']}")
 
 async def save_product_transaction(tx: Dict) -> None:
