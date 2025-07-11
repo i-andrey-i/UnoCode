@@ -24,8 +24,7 @@ app = FastAPI(
 @app.get("/products")
 async def get_products(
     organization: Optional[str] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    date: Optional[str] = None,
     limit: int = Query(default=100, le=1000)
 ) -> Dict:
     """
@@ -33,7 +32,7 @@ async def get_products(
     """
     try:
         transactions = await get_product_transactions(
-            date=end_date,
+            date=date,
             organization=organization
         )
         
@@ -63,29 +62,16 @@ async def get_summary(date: Optional[str] = None) -> Dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/sync")
-async def sync_data(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None
-) -> Dict:
+async def sync_data() -> Dict:
     """
     Запуск синхронизации данных с 1C
-    
-    Args:
-        start_date: Начальная дата синхронизации (YYYY-MM-DD)
-        end_date: Конечная дата синхронизации (YYYY-MM-DD)
     """
     try:
         api = OneCAPI()
+        # По умолчанию синхронизируем за последние 7 дней
+        date_from = datetime.now() - timedelta(days=7)
         
-        if not end_date:
-            end_date = datetime.now().strftime("%Y-%m-%d")
-        if not start_date:
-            # По умолчанию синхронизируем за последние 7 дней
-            start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
-        
-        result = await api.sync_data(
-            date_from=datetime.strptime(start_date, "%Y-%m-%d")
-        )
+        result = await api.sync_data(date_from=date_from)
         
         return result
     except Exception as e:

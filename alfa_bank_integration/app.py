@@ -180,37 +180,39 @@ def get_transaction_summary(
     ]
     return result
 
+# Закомментировано, так как функциональность перенесена в API Gateway
+# Эндпоинт оставлен для справки и возможного восстановления в будущем
 # === GET /api/daily_report ===
-@app.get("/api/daily_report")
-def get_daily_report():
-    conn = sqlite3.connect("bank_data.db")
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT date, organization,
-            SUM(CASE WHEN operation = 'Поступление' THEN amount ELSE 0 END) as total_income,
-            SUM(CASE WHEN operation = 'Списание' THEN amount ELSE 0 END) as total_expense
-        FROM finance_transactions
-        GROUP BY date, organization
-        ORDER BY date DESC
-    """)
-    rows = cur.fetchall()
-    conn.close()
-
-    result = [
-        {
-            "date": row[0],
-            "organization": row[1],
-            "total_income": round(row[2], 2),
-            "total_expense": round(row[3], 2)
-        }
-        for row in rows
-    ]
-    return result
+# @app.get("/api/daily_report")
+# def get_daily_report():
+#     conn = sqlite3.connect("bank_data.db")
+#     cur = conn.cursor()
+# 
+#     cur.execute("""
+#         SELECT date, organization,
+#             SUM(CASE WHEN operation = 'Поступление' THEN amount ELSE 0 END) as total_income,
+#             SUM(CASE WHEN operation = 'Списание' THEN amount ELSE 0 END) as total_expense
+#         FROM finance_transactions
+#         GROUP BY date, organization
+#         ORDER BY date DESC
+#     """)
+#     rows = cur.fetchall()
+#     conn.close()
+# 
+#     result = [
+#         {
+#             "date": row[0],
+#             "organization": row[1],
+#             "total_income": round(row[2], 2),
+#             "total_expense": round(row[3], 2)
+#         }
+#         for row in rows
+#     ]
+#     return result
 
 
 # === GET /api/monthly_balance ===
-@app.get("/api/monthly_balance")
+@app.get("/monthly_balance")
 def get_monthly_balance():
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
@@ -236,7 +238,7 @@ def get_monthly_balance():
 
 
 # === GET /api/incoming_raw ===
-@app.get("/api/incoming_raw")
+@app.get("/incoming_raw")
 def get_incoming_raw():
     raw_path = "raw_transactions.json"
     if not os.path.exists(raw_path):
