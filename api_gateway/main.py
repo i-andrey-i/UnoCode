@@ -5,7 +5,7 @@ import asyncio
 from datetime import datetime
 from typing import Optional, Dict, List
 from config import settings
-from .models import (
+from models import (
     ProductResponse,
     ProductSummaryResponse,
     SyncResponse,
