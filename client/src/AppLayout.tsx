@@ -1,4 +1,6 @@
+import type { ComponentProps } from "react";
 import { NavLink, Outlet } from "react-router";
+import { cn } from "./utils/cn";
 
 export function AppLayout() {
   const activeLinkStyle = {
@@ -31,6 +33,7 @@ export function AppLayout() {
           >
             Отчеты 1С
           </NavLink>
+          <UpdateButton className="ml-auto" />
         </nav>
       </header>
       <main className="p-4 sm:p-8">
@@ -39,5 +42,19 @@ export function AppLayout() {
         </div>
       </main>
     </div>
+  );
+}
+
+function UpdateButton({ className, ...rest }: ComponentProps<"button">) {
+  return (
+    <button
+      className={cn(
+        "rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 duration-100 hover:bg-gray-50",
+        className,
+      )}
+      {...rest}
+    >
+      Обновить
+    </button>
   );
 }
