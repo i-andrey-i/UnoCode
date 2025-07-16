@@ -23,6 +23,7 @@ __pycache__/
 
 #IDE/редактор
 .vscode/
+.cursor/
 .idea/
 
 #Системные файлы

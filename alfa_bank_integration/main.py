@@ -27,14 +27,11 @@ def normalize_method(raw_value):
     val = str(raw_value).strip().lower()
     if "qr" in val:
         return "QR"
-    elif "налич" in val:
+    if "налич" in val or "cash" in val:
         return "Наличка"
-    elif "карт" in val:
+    if "карт" in val or "card" in val or "mcc" in val:
         return "Карта"
-    elif "счет" in val or "счёт" in val:
-        return "Счет"
-    else:
-        return "Счет"
+    return "Счет"
 
 def validate_transaction(item):
     try:

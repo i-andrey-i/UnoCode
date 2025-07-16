@@ -2,3 +2,5 @@ requests
 fastapi
 uvicorn
 python-dotenv
+pandas
+openpyxl
