@@ -1,10 +1,17 @@
 from fastapi import FastAPI, Query, HTTPException
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict
+from typing import Optional
 from db import init_products_db, get_product_transactions, get_daily_product_summary
 from api import OneCAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from schemas import (
+    ProductsResponse,
+    DailySummaryResponse,
+    SyncResponse,
+    HealthCheckResponse,
+    ProductOperation
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,13 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/products")
+@app.get("/products", response_model=ProductsResponse)
 async def get_products(
     organization: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     limit: int = Query(default=100, le=1000)
-) -> Dict:
+) -> ProductsResponse:
     """
     Получение списка товарных операций с фильтрацией
     """
@@ -44,15 +51,16 @@ async def get_products(
             organization=organization
         )
         
-        return {
-            "status": "success",
-            "data": transactions[:limit]
-        }
+        return ProductsResponse(
+            status="success",
+            data=transactions[:limit],
+            total=len(transactions)
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/products/summary")
-async def get_summary(date: Optional[str] = None) -> Dict:
+@app.get("/products/summary", response_model=DailySummaryResponse)
+async def get_summary(date: Optional[str] = None) -> DailySummaryResponse:
     """
     Получение сводки по товарным операциям за день
     """
@@ -61,19 +69,19 @@ async def get_summary(date: Optional[str] = None) -> Dict:
             date = datetime.now().strftime("%Y-%m-%d")
             
         summary = await get_daily_product_summary(date)
-        return {
-            "status": "success",
-            "date": date,
-            "data": summary
-        }
+        return DailySummaryResponse(
+            status="success",
+            date=date,
+            data=summary
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/sync")
+@app.post("/sync", response_model=SyncResponse)
 async def sync_data(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None
-) -> Dict:
+) -> SyncResponse:
     """
     Запуск синхронизации данных с 1C
     """
@@ -90,16 +98,16 @@ async def sync_data(
             date_from=datetime.strptime(start_date, "%Y-%m-%d")
         )
         
-        return result
+        return SyncResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/health")
-async def health_check() -> Dict:
+@app.get("/health", response_model=HealthCheckResponse)
+async def health_check() -> HealthCheckResponse:
     """
     Проверка работоспособности сервиса
     """
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat()
-    }
+    return HealthCheckResponse(
+        status="healthy",
+        timestamp=datetime.now()
+    )

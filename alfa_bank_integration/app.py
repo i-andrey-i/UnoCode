@@ -9,6 +9,14 @@ from typing import Optional
 from main import parse_transactions, validate_transaction, detect_organization, normalize_method
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from schemas import (
+    TransactionsResponse,
+    TransactionSummaryResponse,
+    DailyReportResponse,
+    MonthlyBalanceResponse,
+    SyncResponse,
+    Organization
+)
 
 @asynccontextmanager
 async def lifespan(app):
@@ -26,8 +34,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/transactions")
-def get_transactions(organization: str = None, limit: int = 100):
+@app.get("/transactions", response_model=TransactionsResponse)
+def get_transactions(organization: Optional[Organization] = None, limit: int = 100):
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
 
@@ -38,7 +46,7 @@ def get_transactions(organization: str = None, limit: int = 100):
             WHERE organization = ?
             ORDER BY date DESC
             LIMIT ?
-        """, (organization, limit))
+        """, (organization.value, limit))
     else:
         cur.execute("""
             SELECT organization, operation, method, amount, date, external_id
@@ -61,11 +69,11 @@ def get_transactions(organization: str = None, limit: int = 100):
         }
         for row in rows
     ]
-    return result
+    return {"data": result}
 
-@app.get("/transactions/summary")
+@app.get("/transactions/summary", response_model=TransactionSummaryResponse)
 def get_transaction_summary(
-    organization: Optional[str] = None,
+    organization: Optional[Organization] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     limit: int = 100
@@ -82,7 +90,7 @@ def get_transaction_summary(
 
     if organization:
         filters.append("organization = ?")
-        params.append(organization)
+        params.append(organization.value)
     if start_date:
         filters.append("date >= ?")
         params.append(start_date)
@@ -112,10 +120,9 @@ def get_transaction_summary(
         }
         for row in rows
     ]
-    return result
+    return {"data": result}
 
-# === GET /api/daily_report ===
-@app.get("/api/daily_report")
+@app.get("/api/daily_report", response_model=DailyReportResponse)
 def get_daily_report():
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
@@ -140,12 +147,10 @@ def get_daily_report():
         }
         for row in rows
     ]
-    return result
+    return {"data": result}
 
-
-# === GET /api/monthly_balance ===
-@app.get("/api/monthly_balance")
-def get_monthly_balance(organization: Optional[str] = None):
+@app.get("/api/monthly_balance", response_model=MonthlyBalanceResponse)
+def get_monthly_balance(organization: Optional[Organization] = None):
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
 
@@ -155,7 +160,7 @@ def get_monthly_balance(organization: Optional[str] = None):
             FROM monthly_balance
             WHERE organization = ?
             ORDER BY date
-        """, (organization,))
+        """, (organization.value,))
     else:
         cur.execute("""
             SELECT organization, date, balance
@@ -166,7 +171,7 @@ def get_monthly_balance(organization: Optional[str] = None):
     rows = cur.fetchall()
     conn.close()
 
-    return [
+    result = [
         {
             "organization": row[0],
             "date": row[1],
@@ -174,9 +179,8 @@ def get_monthly_balance(organization: Optional[str] = None):
         }
         for row in rows
     ]
+    return {"data": result}
 
-
-# === GET /api/incoming_raw ===
 @app.get("/api/incoming_raw")
 def get_incoming_raw():
     raw_path = "raw_transactions.json"
@@ -190,7 +194,7 @@ def get_incoming_raw():
             return JSONResponse(status_code=500, content={"error": "Ошибка чтения JSON из файла"})
     return raw_data
 
-@app.post("/api/sync")
+@app.post("/api/sync", response_model=SyncResponse)
 def sync_data():
     try:
         data = fetch_bank_transactions()
@@ -221,4 +225,7 @@ def sync_data():
         }
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return {
+            "status": "error",
+            "error": str(e)
+        }
