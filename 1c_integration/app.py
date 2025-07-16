@@ -4,6 +4,7 @@ from typing import Optional, List, Dict
 from db import init_products_db, get_product_transactions, get_daily_product_summary
 from api import OneCAPI
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,6 +17,15 @@ app = FastAPI(
     description="API для интеграции с 1C и получения данных о товарных операциях",
     version="1.0.0",
     lifespan=lifespan
+)
+
+# Добавляем CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/products")
@@ -92,4 +102,4 @@ async def health_check() -> Dict:
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat()
-    } 
+    }

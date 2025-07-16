@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 from main import parse_transactions, validate_transaction, detect_organization, normalize_method
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app):
@@ -15,6 +16,15 @@ async def lifespan(app):
     yield
 
 app = FastAPI(title="Alfa Bank API", lifespan=lifespan)
+
+# Добавляем CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/transactions")
 def get_transactions(organization: str = None, limit: int = 100):

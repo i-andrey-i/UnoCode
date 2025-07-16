@@ -22,6 +22,6 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
-        env_prefix = "ODATA_"
+        # env_prefix = "ODATA_"
 
 settings = Settings() 

@@ -1,7 +1,10 @@
 import sqlite3
+import os
+
+DATABASE_PATH = os.getenv('DATABASE_PATH', 'bank_data.db')
 
 def init_db():
-    conn = sqlite3.connect("bank_data.db")
+    conn = sqlite3.connect(DATABASE_PATH)
     cur = conn.cursor()
 
     # Таблица финансовых транзакций
@@ -34,7 +37,7 @@ def init_db():
     conn.close()
 
 def save_transaction(tx):
-    conn = sqlite3.connect("bank_data.db")
+    conn = sqlite3.connect(DATABASE_PATH)
     cur = conn.cursor()
     try:
         cur.execute("""
@@ -58,7 +61,7 @@ def save_transaction(tx):
         conn.close()
 
 def update_monthly_balance():
-    conn = sqlite3.connect("bank_data.db")
+    conn = sqlite3.connect(DATABASE_PATH)
     cur = conn.cursor()
 
     # Получаем все уникальные даты и организации из транзакций

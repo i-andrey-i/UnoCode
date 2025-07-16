@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  1c-service:
+    build: ./1c_integration
+    container_name: 1c-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./1c_integration:/app
+      - 1c_data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_PATH=/app/data/products.db
+    networks:
+      - app-network
+
+  bank-service:
+    build: ./alfa_bank_integration
+    container_name: bank-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./alfa_bank_integration:/app
+      - bank_data:/app/data
+      - ./alfa_bank_integration/certs:/app/certs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_PATH=/app/data/bank_data.db
+    networks:
+      - app-network
+
+volumes:
+  1c_data:
+  bank_data:
+
+networks:
+  app-network:
+    driver: bridge
