@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Query, HTTPException
 from datetime import datetime, timedelta
 from typing import Optional
-from db import init_products_db, get_product_transactions, get_daily_product_summary
+from db import init_products_db, get_product_transactions, get_daily_product_summary, get_monthly_product_summary
 from api import OneCAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +10,8 @@ from schemas import (
     DailySummaryResponse,
     SyncResponse,
     HealthCheckResponse,
-    ProductOperation
+    ProductOperation,
+    MonthlySummaryResponse
 )
 
 @asynccontextmanager
@@ -98,6 +99,37 @@ async def get_summary(
         return DailySummaryResponse(
             status="success",
             date=date,
+            data=summary
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/products/monthly-summary", response_model=MonthlySummaryResponse)
+async def get_monthly_summary(
+    month: Optional[str] = Query(None, description="Месяц в формате YYYY-MM")
+) -> MonthlySummaryResponse:
+    """
+    Получение сводки по товарным операциям за месяц
+    """
+    try:
+        if not month:
+            # Если месяц не указан, берем текущий
+            month = datetime.now().strftime("%Y-%m")
+        else:
+            # Проверяем формат
+            try:
+                date = datetime.strptime(month, "%Y-%m")
+                month = date.strftime("%Y-%m")
+            except ValueError:
+                raise HTTPException(status_code=400, detail="month должен быть в формате YYYY-MM")
+            
+        summary = await get_monthly_product_summary(month)
+        
+        return MonthlySummaryResponse(
+            status="success",
+            month=month,
             data=summary
         )
     except HTTPException:

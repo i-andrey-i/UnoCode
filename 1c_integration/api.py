@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, TypedDict
 from odata_client import ODataClient
 from db import save_product_transaction
 from config import settings
+from schemas import SyncResponse
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class OneCAPI:
                         "method": "Закупка" if operation_type == "Поступление" else "Реализация",
                         "item": product["Description"],
                         "date": doc["Date"],
-                        "external_id": f"{doc['Ref_Key']}_{item.get('LineNumber', 0)}"
+                        "external_id": int(f"{doc['Ref_Key']}{item.get('LineNumber', 0)}")
                     }
                     operations.append(operation)
                 except Exception as e:
@@ -113,16 +114,16 @@ class OneCAPI:
             
             logger.info(f"Synchronization completed. Success: {success_count}, Errors: {error_count}")
             
-            return {
-                "status": "success",
-                "total": len(operations),
-                "success": success_count,
-                "errors": error_count
-            }
+            return SyncResponse(
+                status="success",
+                total=len(operations),
+                success=success_count,
+                errors=error_count
+            ).dict()
             
         except Exception as e:
             logger.error(f"Synchronization failed: {str(e)}")
-            return {
-                "status": "error",
-                "message": str(e)
-            } 
+            return SyncResponse(
+                status="error",
+                message=str(e)
+            ).dict() 

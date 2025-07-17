@@ -24,7 +24,7 @@ def init_products_db():
                 item TEXT NOT NULL,
                 date DATE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                external_id TEXT UNIQUE NOT NULL
+                external_id INTEGER UNIQUE
             )
         """)
         
@@ -191,6 +191,47 @@ async def get_daily_product_summary(date: str):
         ]
     except Exception as e:
         logger.error(f"Ошибка при получении сводки за {date}: {str(e)}")
+        raise
+    finally:
+        conn.close()
+
+async def get_monthly_product_summary(year_month: str):
+    """
+    Получение сводки по товарным операциям за месяц
+    
+    Args:
+        year_month: Месяц в формате YYYY-MM
+    """
+    conn = sqlite3.connect(settings.DATABASE_PATH)
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            SELECT 
+                organization,
+                date,
+                SUM(CASE WHEN operation = 'Поступление' THEN 1 ELSE 0 END) as income_count,
+                SUM(CASE WHEN operation = 'Расход' THEN 1 ELSE 0 END) as expense_count,
+                COUNT(*) as total_operations
+            FROM product_transactions 
+            WHERE date LIKE ?
+            GROUP BY organization, date
+            ORDER BY date ASC
+        """, (f"{year_month}%",))
+        
+        rows = cur.fetchall()
+        return [
+            {
+                'organization': row[0],
+                'date': row[1],
+                'income_count': row[2],
+                'expense_count': row[3],
+                'total_operations': row[4]
+            }
+            for row in rows
+        ]
+    except Exception as e:
+        logger.error(f"Ошибка при получении сводки за {year_month}: {str(e)}")
         raise
     finally:
         conn.close()
