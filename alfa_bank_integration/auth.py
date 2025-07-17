@@ -1,20 +1,20 @@
 import requests
-from config import CLIENT_ID, CLIENT_SECRET, CERT_PATH, KEY_PATH, TOKEN_URL, SCOPE
+from config import settings
 
 def get_access_token():
     data = {
         "grant_type": "client_credentials",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-        "scope": SCOPE
+        "client_id": settings.CLIENT_ID,
+        "client_secret": settings.CLIENT_SECRET,
+        "scope": settings.SCOPE
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
     response = requests.post(
-        TOKEN_URL,
+        settings.TOKEN_URL,
         data=data,
         headers=headers,
-        cert=(CERT_PATH, KEY_PATH)
+        cert=(settings.CERT_PATH, settings.KEY_PATH)
     )
     response.raise_for_status()
     return response.json()["access_token"]

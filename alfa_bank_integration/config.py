@@ -1,12 +1,20 @@
 import os
 from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
-load_dotenv()
 
-CLIENT_ID = os.getenv("ALFA_CLIENT_ID")
-CLIENT_SECRET = os.getenv("ALFA_CLIENT_SECRET")
-CERT_PATH = os.getenv("ALFA_CERT_PATH", "certs/Company.cer")
-KEY_PATH = os.getenv("ALFA_KEY_PATH", "certs/Company.key")
-TOKEN_URL = os.getenv("ALFA_TOKEN_URL", "https://baas.alfabank.ru/oidc/token")
-API_BASE_URL = os.getenv("ALFA_API_BASE_URL", "https://baas.alfabank.ru/api")
-SCOPE = os.getenv("ALFA_SCOPE", "")
+class Settings(BaseSettings):
+    CLIENT_ID: str | None = None
+    CLIENT_SECRET: str | None = None
+    CERT_PATH: str | None = None
+    KEY_PATH: str | None = None
+    TOKEN_URL: str | None = None
+    API_BASE_URL: str | None = None
+    DATABASE_PATH: str | None = None
+    SCOPE: str | None = None
+    class Config:
+        env_file = ".env"
+        env_prefix = "ALFA_"
+
+settings = Settings()
+

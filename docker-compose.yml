@@ -26,7 +26,7 @@ services:
       - ./alfa_bank_integration/certs:/app/certs
     environment:
       - PYTHONUNBUFFERED=1
-      - DATABASE_PATH=/app/data/bank_data.db
+      - ALFA_DATABASE_PATH=/app/data/bank_data.db
     networks:
       - app-network
 

@@ -9,6 +9,7 @@ from typing import Optional
 from main import parse_transactions, validate_transaction, detect_organization, normalize_method
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from config import settings
 from schemas import (
     TransactionsResponse,
     TransactionSummaryResponse,
@@ -39,7 +40,7 @@ def get_transactions(
     organization: Optional[str] = Query(None, min_length=1, max_length=100),
     limit: int = Query(100, gt=0)
 ):
-    conn = sqlite3.connect("bank_data.db")
+    conn = sqlite3.connect(settings.DATABASE_PATH)
     cur = conn.cursor()
 
     if organization:
@@ -84,7 +85,7 @@ def get_transaction_summary(
     end_date: Optional[str] = None,
     limit: int = Query(100, gt=0)
 ):
-    conn = sqlite3.connect("bank_data.db")
+    conn = sqlite3.connect(settings.DATABASE_PATH)
     cur = conn.cursor()
 
     base_query = """
@@ -131,7 +132,7 @@ def get_transaction_summary(
 
 @app.get("/api/daily_report", response_model=DailyReportResponse)
 def get_daily_report():
-    conn = sqlite3.connect("bank_data.db")
+    conn = sqlite3.connect(settings.DATABASE_PATH)
     cur = conn.cursor()
 
     cur.execute("""
@@ -160,7 +161,7 @@ def get_daily_report():
 def get_monthly_balance(
     organization: Optional[str] = Query(None, min_length=1, max_length=100)
 ):
-    conn = sqlite3.connect("bank_data.db")
+    conn = sqlite3.connect(settings.DATABASE_PATH)
     cur = conn.cursor()
 
     if organization:
