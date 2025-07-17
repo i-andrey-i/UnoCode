@@ -1,7 +1,7 @@
 import os
 import json
 import sqlite3
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from db import init_db, save_transaction, update_monthly_balance
 from api import fetch_bank_transactions
 from contextlib import asynccontextmanager
@@ -15,7 +15,7 @@ from schemas import (
     DailyReportResponse,
     MonthlyBalanceResponse,
     SyncResponse,
-    Organization
+    MethodType
 )
 
 @asynccontextmanager
@@ -35,21 +35,24 @@ app.add_middleware(
 )
 
 @app.get("/transactions", response_model=TransactionsResponse)
-def get_transactions(organization: Optional[Organization] = None, limit: int = 100):
+def get_transactions(
+    organization: Optional[str] = Query(None, min_length=1, max_length=100),
+    limit: int = Query(100, gt=0)
+):
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
 
     if organization:
         cur.execute("""
-            SELECT organization, operation, method, amount, date, external_id
+            SELECT organization, operation, method, amount, date, external_id, created_at, counterparty, purpose
             FROM finance_transactions
             WHERE organization = ?
             ORDER BY date DESC
             LIMIT ?
-        """, (organization.value, limit))
+        """, (organization.strip(), limit))
     else:
         cur.execute("""
-            SELECT organization, operation, method, amount, date, external_id
+            SELECT organization, operation, method, amount, date, external_id, created_at, counterparty, purpose
             FROM finance_transactions
             ORDER BY date DESC
             LIMIT ?
@@ -65,7 +68,10 @@ def get_transactions(organization: Optional[Organization] = None, limit: int = 1
             "method": row[2],
             "amount": row[3],
             "date": row[4],
-            "external_id": row[5]
+            "external_id": row[5],
+            "created_at": row[6],
+            "counterparty": row[7],
+            "purpose": row[8]
         }
         for row in rows
     ]
@@ -73,16 +79,16 @@ def get_transactions(organization: Optional[Organization] = None, limit: int = 1
 
 @app.get("/transactions/summary", response_model=TransactionSummaryResponse)
 def get_transaction_summary(
-    organization: Optional[Organization] = None,
+    organization: Optional[str] = Query(None, min_length=1, max_length=100),
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    limit: int = 100
+    limit: int = Query(100, gt=0)
 ):
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
 
     base_query = """
-        SELECT date, operation, method, amount, organization, counterparty, purpose
+        SELECT date, operation, method, amount, organization, counterparty, purpose, created_at
         FROM finance_transactions
     """
     filters = []
@@ -90,7 +96,7 @@ def get_transaction_summary(
 
     if organization:
         filters.append("organization = ?")
-        params.append(organization.value)
+        params.append(organization.strip())
     if start_date:
         filters.append("date >= ?")
         params.append(start_date)
@@ -116,7 +122,8 @@ def get_transaction_summary(
             "amount": row[3],
             "organization": row[4],
             "counterparty": row[5],
-            "purpose": row[6]
+            "purpose": row[6],
+            "created_at": row[7]
         }
         for row in rows
     ]
@@ -150,7 +157,9 @@ def get_daily_report():
     return {"data": result}
 
 @app.get("/api/monthly_balance", response_model=MonthlyBalanceResponse)
-def get_monthly_balance(organization: Optional[Organization] = None):
+def get_monthly_balance(
+    organization: Optional[str] = Query(None, min_length=1, max_length=100)
+):
     conn = sqlite3.connect("bank_data.db")
     cur = conn.cursor()
 
@@ -160,7 +169,7 @@ def get_monthly_balance(organization: Optional[Organization] = None):
             FROM monthly_balance
             WHERE organization = ?
             ORDER BY date
-        """, (organization.value,))
+        """, (organization.strip(),))
     else:
         cur.execute("""
             SELECT organization, date, balance
