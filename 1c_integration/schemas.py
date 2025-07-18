@@ -22,6 +22,12 @@ class ProductOperation(BaseModel):
     date: str = Field(..., description="Дата операции в формате YYYY-MM-DD")
     created_at: datetime = Field(default_factory=datetime.now, description="Дата создания записи")
     external_id: int = Field(..., description="ID операции в 1С")
+    contractor: Optional[str] = Field(None, description="Контрагент")
+    manager: Optional[str] = Field(None, description="Менеджер")
+    debit: Optional[float] = Field(None, description="Дебет (расход)")
+    credit: Optional[float] = Field(None, description="Кредит (приход)")
+    cost: Optional[float] = Field(None, description="Себестоимость")
+    profit: Optional[float] = Field(None, description="Валовая прибыль")
 
     @validator('organization')
     def validate_organization(cls, v):
@@ -48,6 +54,10 @@ class DailySummaryItem(BaseModel):
     expense_count: int = Field(..., description="Количество расходов", ge=0)
     total_operations: int = Field(..., description="Общее количество операций", ge=0)
     date: str = Field(..., description="Дата отчета в формате YYYY-MM-DD")
+    total_debit: float = Field(default=0, description="Общая сумма дебета (расхода)")
+    total_credit: float = Field(default=0, description="Общая сумма кредита (прихода)")
+    total_cost: float = Field(default=0, description="Общая себестоимость")
+    total_profit: float = Field(default=0, description="Общая валовая прибыль")
 
     @validator('organization')
     def validate_organization(cls, v):
@@ -81,6 +91,10 @@ class MonthlySummaryItem(BaseModel):
     income_count: int = Field(..., description="Количество поступлений", ge=0)
     expense_count: int = Field(..., description="Количество расходов", ge=0)
     total_operations: int = Field(..., description="Общее количество операций", ge=0)
+    total_debit: float = Field(default=0, description="Общая сумма дебета (расхода)")
+    total_credit: float = Field(default=0, description="Общая сумма кредита (прихода)")
+    total_cost: float = Field(default=0, description="Общая себестоимость")
+    total_profit: float = Field(default=0, description="Общая валовая прибыль")
 
     @validator('organization')
     def validate_organization(cls, v):

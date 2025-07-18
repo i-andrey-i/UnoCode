@@ -24,7 +24,13 @@ class OneCAPI:
         try:
             # Получаем организацию
             org = await self.client.get_catalog_item("Организации", doc["Организация_Key"])
+
+            # Получаем контрагента
+            contractor = await self.client.get_catalog_item("Контрагенты", doc["Контрагент_Key"])
             
+                    # Получаем менеджера
+            manager = await self.client.get_catalog_item("Сотрудники", doc["Менеджер_Key"])
+
             # Обрабатываем каждый товар
             for item in doc.get("Товары", []):
                 try:
@@ -35,12 +41,21 @@ class OneCAPI:
                     )
                     
                     operation = {
+                        # Старые поля
                         "organization": org["Description"],
                         "operation": operation_type,
                         "method": "Закупка" if operation_type == "Поступление" else "Реализация",
                         "item": product["Description"],
                         "date": doc["Date"],
-                        "external_id": int(f"{doc['Ref_Key']}{item.get('LineNumber', 0)}")
+                        "external_id": int(f"{doc['Ref_Key']}{item.get('LineNumber', 0)}"),
+
+                        # Новые поля
+                        "contractor": contractor["Description"],
+                        "manager": manager["Description"],
+                        "debit": doc["СуммаДебет"], # Расход
+                        "credit": doc["СуммаКредит"], # Приход
+                        "cost": doc["Себестоимость"], 
+                        "profit": doc["ВаловаяПрибыль"]
                     }
                     operations.append(operation)
                 except Exception as e:

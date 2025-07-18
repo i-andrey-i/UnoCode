@@ -24,7 +24,15 @@ def init_products_db():
                 item TEXT NOT NULL,
                 date DATE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                external_id INTEGER UNIQUE
+                external_id INTEGER UNIQUE,
+                    
+                -- Новые поля
+                contractor TEXT,
+                manager TEXT,
+                debit REAL,
+                credit REAL,
+                cost REAL,
+                profit REAL
             )
         """)
         
@@ -74,6 +82,15 @@ def validate_transaction(tx: Dict) -> None:
             datetime.strptime(tx['date'], '%Y-%m-%d')
     except ValueError:
         raise ValueError(f"Неверный формат даты: {tx['date']}")
+    
+    # Проверка числовых полей
+    numeric_fields = ['debit', 'credit', 'cost', 'profit']
+    for field in numeric_fields:
+        if field in tx and tx[field] is not None:
+            try:
+                float(tx[field])
+            except (ValueError, TypeError):
+                raise ValueError(f"Поле {field} должно быть числом")
 
 async def save_product_transaction(tx: Dict) -> None:
     """
@@ -92,15 +109,22 @@ async def save_product_transaction(tx: Dict) -> None:
         try:
             cur.execute("""
                 INSERT INTO product_transactions (
-                    organization, operation, method, item, date, external_id
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    organization, operation, method, item, date, external_id,
+                    contractor, manager, debit, credit, cost, profit
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 tx["organization"],
                 tx["operation"],
                 tx["method"],
                 tx["item"],
                 tx["date"],
-                tx["external_id"]
+                tx["external_id"],
+                tx.get("contractor"),
+                tx.get("manager"),
+                tx.get("debit"),
+                tx.get("credit"),
+                tx.get("cost"),
+                tx.get("profit")
             ))
             conn.commit()
             logger.info(f"Сохранена товарная операция: {tx['external_id']}")
@@ -148,7 +172,10 @@ async def get_product_transactions(date=None, organization=None):
         cur.execute(query, params)
         rows = cur.fetchall()
         
-        columns = ['id', 'organization', 'operation', 'method', 'item', 'date', 'created_at', 'external_id']
+        columns = [
+            'id', 'organization', 'operation', 'method', 'item', 'date', 'created_at', 'external_id',
+            'contractor', 'manager', 'debit', 'credit', 'cost', 'profit'
+        ]
         return [dict(zip(columns, row)) for row in rows]
         
     except Exception as e:
@@ -171,21 +198,30 @@ async def get_daily_product_summary(date: str):
         cur.execute("""
             SELECT 
                 organization,
-                operation,
-                COUNT(*) as count,
-                GROUP_CONCAT(item, ', ') as items
+                SUM(CASE WHEN operation = 'Поступление' THEN 1 ELSE 0 END) as income_count,
+                SUM(CASE WHEN operation = 'Расход' THEN 1 ELSE 0 END) as expense_count,
+                COUNT(*) as total_operations,
+                SUM(COALESCE(debit, 0)) as total_debit,
+                SUM(COALESCE(credit, 0)) as total_credit,
+                SUM(COALESCE(cost, 0)) as total_cost,
+                SUM(COALESCE(profit, 0)) as total_profit
             FROM product_transactions 
             WHERE date = ?
-            GROUP BY organization, operation
+            GROUP BY organization
         """, (date,))
         
         rows = cur.fetchall()
         return [
             {
                 'organization': row[0],
-                'operation': row[1],
-                'count': row[2],
-                'items': row[3]
+                'income_count': row[1],
+                'expense_count': row[2],
+                'total_operations': row[3],
+                'date': date,
+                'total_debit': float(row[4]),
+                'total_credit': float(row[5]),
+                'total_cost': float(row[6]),
+                'total_profit': float(row[7])
             }
             for row in rows
         ]
@@ -212,7 +248,11 @@ async def get_monthly_product_summary(year_month: str):
                 date,
                 SUM(CASE WHEN operation = 'Поступление' THEN 1 ELSE 0 END) as income_count,
                 SUM(CASE WHEN operation = 'Расход' THEN 1 ELSE 0 END) as expense_count,
-                COUNT(*) as total_operations
+                COUNT(*) as total_operations,
+                SUM(COALESCE(debit, 0)) as total_debit,
+                SUM(COALESCE(credit, 0)) as total_credit,
+                SUM(COALESCE(cost, 0)) as total_cost,
+                SUM(COALESCE(profit, 0)) as total_profit
             FROM product_transactions 
             WHERE date LIKE ?
             GROUP BY organization, date
@@ -226,7 +266,11 @@ async def get_monthly_product_summary(year_month: str):
                 'date': row[1],
                 'income_count': row[2],
                 'expense_count': row[3],
-                'total_operations': row[4]
+                'total_operations': row[4],
+                'total_debit': float(row[5]),
+                'total_credit': float(row[6]),
+                'total_cost': float(row[7]),
+                'total_profit': float(row[8])
             }
             for row in rows
         ]

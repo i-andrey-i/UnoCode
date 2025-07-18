@@ -47,8 +47,8 @@ class ODataClient:
         url = f"{self.base_url}/Document_{doc_type}"
         params = {
             "$filter": self._build_filter(date_from),
-            "$select": "Ref_Key,Number,Date,Posted,Организация_Key",
-            "$expand": "Товары",
+            "$select": "Ref_Key,Number,Date,Posted,Организация_Key,Контрагент_Key,Менеджер_Key,СуммаДебет,СуммаКредит,Себестоимость,ВаловаяПрибыль",
+            "$expand": "Товары($select=Количество,Цена,Сумма,Себестоимость,ВаловаяПрибыль,Номенклатура_Key)",
             "$orderby": "Date desc"
         }
 
