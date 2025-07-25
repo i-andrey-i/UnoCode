@@ -32,15 +32,15 @@ export function OneCTable({ data }: { data: OneCDayRecord[] }) {
     <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
-          <col className="w-32" /> {/* Заказ */}
-          <col className="w-32" /> {/* Дебет */}
-          <col className="w-32" /> {/* Кредит */}
-          <col className="w-52" /> {/* Контрагент */}
-          <col className="w-40" /> {/* Менеджер */}
-          <col className="w-64" /> {/* Товар */}
-          <col className="w-36" /> {/* Себестоимость */}
-          <col className="w-40" /> {/* Валовая прибыль */}
-          <col className="w-40" /> {/* Вид оплаты */}
+          <col className="w-32" />
+          <col className="w-32" />
+          <col className="w-32" />
+          <col className="w-52" />
+          <col className="w-40" />
+          <col className="w-64" />
+          <col className="w-36" />
+          <col className="w-40" />
+          <col className="w-40" />
         </colgroup>
 
         <thead className="bg-gray-50 text-xs text-gray-700 uppercase">

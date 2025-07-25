@@ -1,4 +1,9 @@
+import { useMemo, type ComponentProps } from "react";
 import { NavLink, Outlet } from "react-router";
+import { cn } from "./utils/cn";
+import { useSyncronizeAlfaMutation } from "./features/alfaApi";
+import { useSyncronizeOneCMutation } from "./features/oneCApi";
+import { Loader2 } from "lucide-react";
 
 export function AppLayout() {
   const activeLinkStyle = {
@@ -31,6 +36,7 @@ export function AppLayout() {
           >
             Отчеты 1С
           </NavLink>
+          <UpdateButton className="ml-auto" />
         </nav>
       </header>
       <main className="p-4 sm:p-8">
@@ -39,5 +45,29 @@ export function AppLayout() {
         </div>
       </main>
     </div>
+  );
+}
+
+function UpdateButton({ className, onClick, ...rest }: ComponentProps<"button">) {
+  const [syncronizeAlfa, { isLoading: isLoadingAlfa }] = useSyncronizeAlfaMutation();
+  const [syncronizeOneC, { isLoading: isLoadingOneC }] = useSyncronizeOneCMutation();
+  const isLoading = useMemo(() => isLoadingAlfa || isLoadingOneC, [isLoadingAlfa, isLoadingOneC]);
+
+  return (
+    <button
+      onClick={(e) => {
+        syncronizeAlfa(null);
+        syncronizeOneC(null);
+        onClick?.(e);
+      }}
+      className={cn(
+        "flex h-[38px] w-24 items-center justify-center rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 duration-100 hover:bg-gray-50",
+        className,
+      )}
+      disabled={isLoading}
+      {...rest}
+    >
+      {isLoading ? <Loader2 className="animate-spin" /> : "Обновить"}
+    </button>
   );
 }

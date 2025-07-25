@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Details, Entity } from "../../models/daily";
+import { ChevronRightIcon } from "lucide-react";
 
 interface EntityRowProps {
   entityData: Entity;
@@ -40,7 +41,7 @@ export const EntityRow: React.FC<EntityRowProps> = ({ entityData }) => {
           <span
             className={`mr-3 transition-transform duration-200 ${!isCollapsed ? "rotate-90" : ""}`}
           >
-            ▶
+            <ChevronRightIcon />
           </span>
           {entityData.name}
           <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-semibold ${typeStyles}`}>

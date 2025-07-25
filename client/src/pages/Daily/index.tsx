@@ -1,9 +1,24 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { reportData } from "../../models/daily.mock";
 import { DayBlock } from "./DayBlock";
 import { SummaryHeader } from "./SummaryHeader";
+import { useGetDailyReportQuery } from "../../features/alfaApi";
 
 export function DailyPage() {
+  const { data } = useGetDailyReportQuery(null);
+
+  useEffect(() => {
+    document.title = "Ежедневный отчёт • " + import.meta.env.VITE_APP_NAME;
+    const today = new Date(Date.now());
+    today.setHours(0, 0, 0, 0);
+    console.log(today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate());
+  }, []);
+
+  useEffect(() => {
+    // тут как нибудь надо парсить дату
+    if (data) console.log(data.data);
+  }, [data]);
+
   const currentBalance = useMemo(() => {
     // Считаем сумму всех поступлений и расходов
     const totalNetChange = reportData.dailyReports.reduce((totalAcc, day) => {
