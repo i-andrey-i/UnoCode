@@ -1,8 +1,0 @@
-requests
-fastapi
-uvicorn
-python-dotenv
-pandas
-openpyxl
-pydantic
-pydantic-settings
