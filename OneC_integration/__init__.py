@@ -5,7 +5,4 @@ __all__ = [
     'sync_1c_products',
     'get_product_transactions',
     'get_daily_product_summary',
-    'ORGANIZATIONS',
-    'OPERATIONS',
-    'METHODS'
 ] 
