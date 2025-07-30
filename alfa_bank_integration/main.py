@@ -1,8 +1,8 @@
 import logging
 import json
 from datetime import datetime
-from db import init_db, save_transaction, update_monthly_balance
-from api import fetch_bank_transactions
+from .db import init_db, save_transaction, update_monthly_balance
+from .api import fetch_bank_transactions
 
 # Настройка логирования
 logging.basicConfig(

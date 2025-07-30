@@ -1,6 +1,6 @@
 import requests
-from config import settings
-from auth import get_access_token
+from .config import settings
+from .auth import get_access_token
 
 def fetch_bank_transactions():
     token = get_access_token()

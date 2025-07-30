@@ -1,5 +1,5 @@
 import requests
-from config import settings
+from .config import settings
 
 def get_access_token():
     data = {
