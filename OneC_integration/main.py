@@ -1,8 +1,8 @@
 import uvicorn
 import logging
 from datetime import datetime
-from db import init_products_db
-from api import OneCAPI
+from .db import init_products_db
+from .api import OneCAPI
 
 # Настройка логирования
 logging.basicConfig(

@@ -2,7 +2,7 @@ import requests
 from datetime import datetime
 from typing import Optional, Dict, List
 import logging
-from config import settings
+from .config import settings
 
 class ODataClient:
     def __init__(self):

@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
 from typing import List, Dict, Optional, TypedDict
-from odata_client import ODataClient
-from db import save_product_transaction
-from config import settings
-from schemas import SyncResponse
+from .odata_client import ODataClient
+from .db import save_product_transaction
+from .config import settings
+from .schemas import SyncResponse
 
 logger = logging.getLogger(__name__)
 
